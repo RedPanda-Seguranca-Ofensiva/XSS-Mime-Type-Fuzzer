@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URL Behavior Checker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 20px;
+        }
+        textarea {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        iframe {
+            display: none;
+        }
+        .result, .executing-js {
+            margin-top: 20px;
+            border: 1px solid #ccc;
+            padding: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>URL Behavior Checker</h1>
+    <textarea id="urlList" rows="10" placeholder="Enter URLs, one per line..."></textarea>
+    <br>
+    <button id="checkUrls">Check URLs</button>
+    <div id="executingJsUrls" class="executing-js">
+        <strong>URLs Executing JavaScript:</strong>
+        <ul id="jsUrlList"></ul>
+    </div>
+    <div id="results" class="result"></div>
+    
+    <iframe id="testFrame"></iframe>
+
+    <script>
+        //wait for message
+        function waitForMessage(timeout = 2000) {
+            return new Promise((resolve, reject) => {
+                const messageHandler = (event) => {
+                    // You can add additional checks to verify the origin of the message or its content.
+                    if (event.origin === window.origin) {
+                        resolve(event.data);  // Resolves with the received message
+                    }
+                };
+
+                window.addEventListener('message', messageHandler);
+
+                // Set a timeout to reject after the specified time
+                const timer = setTimeout(() => {
+                    window.removeEventListener('message', messageHandler);  // Clean up the event listener
+                    reject('Timeout: Message not received');
+                }, timeout);
+
+                // Cleanup after message is received
+                const cleanup = () => {
+                clearTimeout(timer);  // Clear the timeout
+                    window.removeEventListener('message', messageHandler);  // Remove the listener
+                };
+
+                // If the message is received, resolve the promise and clean up
+                const resolveMessage = (message) => {
+                    resolve(message);
+                    cleanup();
+                };
+
+                // To handle the case where the message arrives
+                window.addEventListener('message', (event) => resolveMessage(event.data));
+            });
+        }
+
+
+        document.getElementById('checkUrls').addEventListener('click', () => {
+            const urls = document.getElementById('urlList').value.split('\n').map(url => url.trim()).filter(url => url);
+            const resultsDiv = document.getElementById('results');
+            const jsUrlList = document.getElementById('jsUrlList');
+            const testFrame = document.getElementById('testFrame');
+            
+            resultsDiv.innerHTML = '<strong>Checking URLs...</strong>';
+            jsUrlList.innerHTML = '';
+            let results = [];
+            let currentIndex = 0;
+
+            const checkNextUrl = () => {
+                if (currentIndex >= urls.length) {
+                    resultsDiv.innerHTML = results.join('');
+                    return;
+                }
+
+                const url = urls[currentIndex];
+                results.push(`<p>${url}: <em>Testing...</em></p>`);
+                resultsDiv.innerHTML = results.join('');
+
+                let isLoaded = false;
+
+                // Timeout to detect download or inaccessible URLs
+                const loadTimeout = setTimeout(() => {
+                    if (!isLoaded) {
+                        results[currentIndex] = `<p>${url}: <strong>Likely Downloaded or Unreadable</strong></p>`;
+                        currentIndex++;
+                        checkNextUrl();
+                    }
+                }, 2000);
+
+                // Set up iframe loading
+                testFrame.onload = () => {
+                    if (!isLoaded) {
+                        isLoaded = true;
+                        clearTimeout(loadTimeout);
+                        
+                        waitForMessage(5000)  // 5 seconds timeout
+                        .then((message) => {
+                            results[currentIndex] = `<p>${url}: <strong>JS is execute</strong></p>`;
+                            // Add the URL to the executing JS list
+                            const listItem = document.createElement('li');
+                            listItem.textContent = url;
+                            jsUrlList.appendChild(listItem);
+                            currentIndex++;
+                            checkNextUrl();
+                        })
+                        .catch((error) => {
+                            results[currentIndex] = `<p>${url}: <strong>Open by the Browser</strong></p>`;
+                            currentIndex++;
+                            checkNextUrl();
+                        });
+
+                        
+                    }
+                };
+
+                // Try to load the URL in the iframe
+                try {
+                    testFrame.src = `${url}`;
+                } catch (error) {
+                    clearTimeout(loadTimeout);
+                    results[currentIndex] = `<p>${url}: <strong>Error loading</strong></p>`;
+                    currentIndex++;
+                    checkNextUrl();
+                }
+            };
+
+            checkNextUrl();
+        });
+    </script>
+</body>
+</html>
