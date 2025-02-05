@@ -1,3 +1,10 @@
+# NEW Mime-types that can execute XSS and its format
+
+| Safari iOS | Format | Notes |
+|-------------------------------|--------|-------|
+| model/vnd.usdz+zip            | HTML   | Only works if loaded inside an iframe as src |
+| video/mp2t                    | HTML   |
+
 # XSS Mime-Type Fuzzer
 
 This is the result of a research I have done to exploit an XSS vulnerability in a file uploade functionality. When testing the target application, I noticed that they implement a blacklist of mime-types to prevent malicious HTML/XML from being loaded inside the application.
@@ -23,15 +30,9 @@ http://localhost:9091/?mime=image/svg%2bxml&parser=xml
 
 Remember to url encode every '+' sign  (%2b).
 
-In the wordlist directory is a example of the wordlist used to fuzz the browsers listed below.
+In the wordlist directory is the list that I used as source during the fuzzing.
 
 ![Alt Text](fuzzer.gif)
 
 NOTE: The browser will try to download some files (because of some content-type) so you should block downloads in your browser settings before running the fuzzer.
 
-# NEW Mime-types that can execute XSS and its format
-
-| Safari iOS | Format | Notes |
-|-------------------------------|--------|-------|
-| model/vnd.usdz+zip            | HTML   | Only works if loaded inside an iframe as src |
-| video/mp2t                    | HTML   |
