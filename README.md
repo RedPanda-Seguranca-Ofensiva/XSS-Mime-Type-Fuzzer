@@ -31,7 +31,7 @@ NOTE: The browser will try to download some files (because of some content-type)
 
 # NEW Mime-types that can execute XSS and its format
 
-| XSS WebKit iOS | Format | Notes |
+| Safari iOS | Format | Notes |
 |-------------------------------|--------|-------|
 | model/vnd.usdz+zip            | HTML   | Only works if loaded inside an iframe as src |
 | video/mp2t                    | HTML   |
