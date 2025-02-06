@@ -1,4 +1,4 @@
-# NEW Mime-types that can execute XSS and its format
+# NEW Mime-types that can execute XSS when using nosniff
 
 | Safari iOS | Format | Notes |
 |-------------------------------|--------|-------|
